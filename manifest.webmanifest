@@ -1,0 +1,17 @@
+{
+  "name": "九九道場",
+  "short_name": "九九道場",
+  "description": "板を割って帯を上げる！九九の読み方まで覚えられる空手道場ゲーム",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#4a080b",
+  "theme_color": "#7a1014",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

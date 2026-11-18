@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>九九道場</title>
+<meta name="description" content="板を割って帯を上げる！九九の読み方まで覚えられる空手道場ゲーム">
+<meta name="theme-color" content="#7a1014">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="九九道場">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Boku&text=%E4%B9%9D%E9%81%93%E5%A0%B4&display=swap" rel="stylesheet">
+<style>
+/* VOICE: 熱い道場の試合。短いことば、大きな数字、気合。まちがえても責めない
+   IDEA: 空手の板割り。九九の「だん」と空手の「段・帯」をかける
+   PICTURE: 夕日を背にした黒い影の空手家と、問題が書かれたヒノキの板
+   COLOUR and TYPE: 漆の朱赤×ヒノキ×墨、星は金。Yuji Boku / Dela Gothic One / Zen Kaku Gothic New
+   LAYOUT: スマホ縦1画面。上にHUD、中央に場面、下に木札の4択 */
+:root{color-scheme:dark;--red:#8e1418;--red2:#4a080b;--wood:#efd09a;--wood2:#d6a663;--ink:#26140a;--sil:#160807;--gold:#f6c744;--txt:#fff6ea;--belt:#f4f0e6}
+:root[data-theme=light],:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--red2);color:var(--txt);font:16px/1.5 "Zen Kaku Gothic New",system-ui,sans-serif;font-weight:700;overflow-x:clip}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button:disabled{cursor:default}
+#app{max-width:520px;margin:0 auto;min-height:100dvh;background:radial-gradient(120% 55% at 50% 0%,#b3211f 0,var(--red) 45%,var(--red2) 100%)}
+.scr{display:none;min-height:100dvh;flex-direction:column;padding:14px 16px 22px}
+.scr.on{display:flex}
+.dg{font-family:"Dela Gothic One","Zen Kaku Gothic New",sans-serif;font-weight:400}
+/* home */
+.hero{position:relative;height:168px;border-radius:18px;overflow:hidden;background:linear-gradient(#3b0709,#6a1013 75%,#4a0a0c)}
+.hero .sun{width:150px;left:auto;right:-10px;top:4px}
+.hero svg{position:absolute;right:6px;bottom:8px;height:142px;width:114px}
+.ttl{position:absolute;left:18px;top:30px;margin:0;font:400 clamp(42px,12.5vw,56px)/1.05 "Yuji Boku","Dela Gothic One",serif;text-shadow:0 3px 0 #000,0 0 18px rgba(255,120,60,.45);letter-spacing:.04em}
+.hsub{position:absolute;left:20px;top:96px;max-width:58%;margin:0;font-weight:900;font-size:14px;line-height:1.35;opacity:.9}
+.rank{display:grid;grid-template-columns:84px minmax(0,1fr);gap:12px;align-items:center;background:rgba(0,0,0,.3);border-radius:14px;padding:12px 14px;margin:12px 0 14px}
+.rank svg{width:84px;height:42px}
+.rank b{font-size:22px;display:block;line-height:1.15}
+.rank small{font-size:13px;opacity:.85}
+.meter{height:10px;background:rgba(255,255,255,.15);border-radius:6px;overflow:hidden;margin:6px 0 3px}
+.meter i{display:block;height:100%;background:var(--gold);width:0;transition:width .6s}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.plq{position:relative;background:repeating-linear-gradient(93deg,rgba(110,60,20,.09) 0 2px,transparent 2px 11px),linear-gradient(#f6ddae,var(--wood2));color:var(--ink);border-radius:10px;box-shadow:0 4px 0 #8a5a2b,0 8px 14px rgba(0,0,0,.35);transition:transform .08s,box-shadow .08s}
+.plq:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #8a5a2b,0 4px 8px rgba(0,0,0,.3)}
+.dan{padding:10px 4px 8px;min-height:96px}
+.dan b{font-size:36px;line-height:1;display:block}
+.dan span{font-weight:900;font-size:13px}
+.st{display:block;font-style:normal;font-size:15px;letter-spacing:1px;color:rgba(80,40,10,.28)}
+.st .y{color:#f0a400;-webkit-text-stroke:1px #6b3d0a}
+.row2{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:10px;margin-top:12px}
+.boss{background:linear-gradient(#6a6f78,#3a3d44);color:#fff;box-shadow:0 4px 0 #1e2024,0 8px 14px rgba(0,0,0,.35);padding:12px 8px;font-size:17px;line-height:1.25}
+.boss .st{color:rgba(255,255,255,.25)}
+.weak{padding:12px 8px;font-size:16px;line-height:1.25}
+.weak small{display:block;font-size:13px}
+.weak:disabled{opacity:.45}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px}
+.link{min-height:44px;padding:0 14px;border-radius:10px;background:rgba(0,0,0,.25);font-weight:900}
+.foot p{margin:0;font-size:13px;opacity:.75}
+/* battle */
+.hud{display:flex;align-items:center;gap:12px;min-height:44px}
+.hud .link{min-height:40px;font-size:14px}
+.hp{display:flex;gap:7px}
+.hp i{width:15px;height:15px;transform:rotate(45deg);background:#ff5b3a;border:2px solid rgba(255,255,255,.5);border-radius:3px;transition:background .2s}
+.hp i.off{background:rgba(0,0,0,.4);border-color:rgba(255,255,255,.15)}
+.score{margin-left:auto;font-size:22px}
+.r2{display:flex;justify-content:space-between;align-items:baseline;font-weight:900;font-size:15px;min-height:26px}
+.combo{color:var(--gold);font-family:"Dela Gothic One";font-size:18px}
+.combo.bump{animation:bump .3s}
+.scene{position:relative;flex:1;min-height:220px;max-height:330px;margin:8px 0 10px;border-radius:16px;overflow:hidden;background:linear-gradient(#3b0709,#6a1013 72%,#4a0a0c)}
+.sun{position:absolute;width:62%;aspect-ratio:1;left:-10%;top:4%;border-radius:50%;background:radial-gradient(circle,#ffe39a 0,#ff9a45 42%,#e8451f 69%,rgba(232,69,31,0) 71%)}
+.floor{position:absolute;left:0;right:0;bottom:0;height:20%;background:repeating-linear-gradient(90deg,rgba(0,0,0,.2) 0 2px,transparent 2px 64px),linear-gradient(#b8793e,#7a4a20)}
+.fighter{position:absolute;left:1%;bottom:5%;width:45%;height:86%;transition:transform .12s}
+.pP{display:none}
+.punch .pS{display:none}.punch .pP{display:inline}
+.fighter.punch{transform:translateX(7%)}
+.fighter.fire{animation:fire .5s ease-in-out infinite alternate}
+.fighter.hurt{animation:hurt .45s}
+.tail{transform-origin:66px 31px;animation:flap .5s ease-in-out infinite alternate}
+.belt{stroke:var(--belt)}
+.belt .bo{stroke:rgba(255,255,255,.45)}
+.stand{position:absolute;right:4%;bottom:12%;width:52%;height:62%}
+.stand::before,.stand::after{content:"";position:absolute;z-index:0;bottom:-20%;top:35%;width:10px;border-radius:3px;background:linear-gradient(90deg,#3b2210,#6b4220)}
+.stand::before{left:14%}.stand::after{right:14%}
+.board{position:absolute;inset:0;z-index:1}
+.board.in{animation:bin .28s ease-out}
+.board.bonk{animation:bonk .4s}
+.board .h{position:absolute;inset:0;border-radius:8px;display:grid;place-items:center;text-align:center;color:var(--ink);background:repeating-linear-gradient(94deg,rgba(120,70,20,.1) 0 2px,transparent 2px 9px),linear-gradient(160deg,#f6dcaa,#ddb070);box-shadow:inset 0 -6px 0 rgba(120,70,20,.25)}
+.board.tile .h{background:repeating-linear-gradient(0deg,rgba(255,255,255,.06) 0 6px,transparent 6px 22px),linear-gradient(160deg,#7d838d,#40444b);color:#fff;box-shadow:inset 0 -6px 0 rgba(0,0,0,.3)}
+.board .l{clip-path:polygon(0 0,52% 0,45% 30%,56% 55%,46% 80%,52% 100%,0 100%)}
+.board .r{clip-path:polygon(52% 0,100% 0,100% 100%,52% 100%,46% 80%,56% 55%,45% 30%)}
+.board.brk .l{animation:fl .6s cubic-bezier(.3,.5,.6,1) forwards}
+.board.brk .r{animation:fr .6s cubic-bezier(.3,.5,.6,1) forwards}
+.qn{font-family:"Dela Gothic One";font-size:clamp(40px,13vw,62px);line-height:1;white-space:nowrap}
+.qn i{font-style:normal;font-size:.7em;margin:0 .08em;position:relative;top:-.08em}
+.qy{font-weight:900;font-size:clamp(20px,6.6vw,31px);line-height:1.2;white-space:nowrap}
+.qy small{display:block;font-family:"Dela Gothic One";font-weight:400;font-size:16px;opacity:.65}
+.qy u{text-decoration:none;color:#b3261e}
+.tile .qy u{color:var(--gold)}
+.qm{display:grid;justify-items:center;gap:2px;font-weight:900;font-size:14px}
+.qm svg{width:54px;height:54px}
+.pop{position:absolute;right:6%;top:6%;z-index:5;font-family:"Dela Gothic One";font-size:clamp(30px,10vw,46px);color:#fff;-webkit-text-stroke:2px #1a0606;paint-order:stroke fill;text-shadow:0 4px 0 #1a0606;animation:pop .8s ease-out forwards;pointer-events:none;white-space:nowrap}
+.pop.c{color:var(--gold)}.pop.n{color:#ffd0c4;font-size:30px}
+.burst{position:absolute;left:26%;top:6%;width:44%;aspect-ratio:1;z-index:4;pointer-events:none;animation:burst .45s ease-out forwards}
+.scene.shk{animation:shk .3s}
+.yb{position:absolute;left:8px;right:8px;bottom:8px;z-index:6;display:flex;align-items:center;gap:10px;background:rgba(22,5,5,.86);border-radius:12px;padding:8px 12px;transform:translateY(130%);transition:transform .18s}
+.yb.on{transform:none}
+.yb div{flex:1;text-align:center}
+.yb small{display:block;font-family:"Dela Gothic One";font-size:15px;color:var(--gold)}
+.yb b{display:block;font-size:clamp(21px,6.8vw,30px);font-weight:900;line-height:1.25}
+.yb button{flex:none;min-height:48px;padding:0 14px;border-radius:10px;background:var(--gold);color:#3a1a00;font-weight:900}
+.gauge{height:14px;border-radius:8px;background:rgba(0,0,0,.4);overflow:hidden}
+.gauge i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ffd15c,#ff9b2f)}
+.gauge.low i{background:#ff3b2f}
+.ask{text-align:center;font-weight:900;font-size:17px;min-height:30px;margin:6px 0 8px}
+.ch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ch button{min-height:78px;font-family:"Dela Gothic One";font-size:36px;line-height:1}
+.ch.yomi button{font-family:"Zen Kaku Gothic New";font-weight:900;font-size:clamp(18px,5.6vw,23px)}
+.ch .ok{background:linear-gradient(#fff4b8,#f6c744);box-shadow:0 4px 0 #a37514,0 0 0 3px #fff}
+.ch .ng{background:#cdbfae;color:#7d6a58;animation:shake .35s}
+/* learn */
+.bar{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.bar .link{flex:none;white-space:nowrap}
+.bar h2{margin:0;font-size:30px;line-height:1.1}
+.ctl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.ctl button{min-height:48px;border-radius:10px;background:rgba(0,0,0,.28);font-weight:900}
+.ctl button.act{background:var(--gold);color:#3a1a00}
+.rows{display:grid;gap:7px;margin-bottom:14px}
+.row{display:grid;grid-template-columns:6.8em minmax(0,1fr);align-items:center;text-align:left;padding:9px 14px;min-height:52px;border-radius:10px;background:rgba(0,0,0,.26);transition:background .15s}
+.row .f{font-family:"Dela Gothic One";font-size:20px;white-space:nowrap}
+.row .y{font-weight:900;font-size:19px;line-height:1.3}
+.row em{font-style:normal;border-radius:6px}
+.row.now{background:var(--wood);color:var(--ink)}
+.hide .row:not(.peek) em{color:transparent;background:rgba(255,255,255,.18)}
+.hide .row.now:not(.peek) em{background:rgba(60,30,10,.2)}
+.tip{font-size:13px;opacity:.8;margin:0 0 12px}
+/* buttons, sheets */
+.btn{display:block;width:100%;min-height:56px;border-radius:12px;font-family:"Dela Gothic One";font-size:20px;margin-top:10px}
+.btn.go{background:linear-gradient(#ffd864,#f2a516);color:#3a1a00;box-shadow:0 4px 0 #9a6206}
+.btn.go:active{transform:translateY(3px);box-shadow:0 1px 0 #9a6206}
+.btn.sub{background:var(--wood);color:var(--ink);box-shadow:0 4px 0 #8a5a2b}
+.btn.ghost{background:rgba(255,255,255,.1);font-family:"Zen Kaku Gothic New";font-weight:900;font-size:16px;min-height:48px}
+.sheet{position:fixed;inset:0;z-index:20;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55)}
+.sheet.mid{align-items:center;padding:16px}
+.sheet.on{display:flex}
+.sheet>div{width:min(520px,100%);max-height:92dvh;overflow:auto;background:linear-gradient(#640c10,#3a0709);border-radius:18px 18px 0 0;padding:20px 18px 24px;animation:up .22s ease-out}
+.sheet.mid>div{border-radius:18px}
+.sheet h2{margin:0;font-family:"Dela Gothic One";font-weight:400;font-size:32px;line-height:1.1}
+.st.big{font-size:30px;color:rgba(255,255,255,.18);margin:4px 0}
+.shd{margin:4px 0 10px;font-size:15px}
+.mini{display:flex;gap:18px;font-size:14px;opacity:.9}
+.mini b{font-family:"Dela Gothic One";font-weight:400;font-size:18px;margin-left:4px}
+.how{font-size:13px;opacity:.75;margin:8px 0 4px}
+.opt{margin:16px 0}
+.opt>span{display:block;font-weight:900;margin-bottom:6px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1 1 0;min-height:46px;border-radius:10px;background:rgba(0,0,0,.3);font-weight:900;padding:0 6px}
+.seg button.act{background:var(--gold);color:#3a1a00}
+.note{font-size:13px;opacity:.75}
+/* result */
+.res{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center}
+.res h2{margin:0;font-size:50px;line-height:1.05;text-shadow:0 4px 0 #000}
+.rs{font-size:56px;letter-spacing:6px;color:rgba(255,255,255,.15);line-height:1.2}
+.rs i{font-style:normal;display:inline-block}
+.rs .y{color:var(--gold);animation:star .5s backwards}
+.msg{font-size:17px;font-weight:900;margin:6px 0 14px}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.stats div{background:rgba(0,0,0,.28);border-radius:12px;padding:8px}
+.stats small{display:block;font-size:13px;opacity:.8}
+.stats b{font-family:"Dela Gothic One";font-weight:400;font-size:24px}
+.miss{margin-top:14px;text-align:left}
+.miss p{margin:0 0 6px;font-weight:900}
+.bu{text-align:center}
+.bu p{margin:0;font-family:"Dela Gothic One";font-size:40px;color:var(--gold);text-shadow:0 3px 0 #000}
+.bu svg{width:220px;height:110px;margin:10px auto;display:block;animation:star .6s}
+.bu b{display:block;font-size:30px}
+@keyframes bin{from{transform:translateX(70%) rotate(8deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes fl{to{transform:translate(-28%,75%) rotate(-40deg);opacity:0}}
+@keyframes fr{to{transform:translate(42%,85%) rotate(44deg);opacity:0}}
+@keyframes bonk{25%{transform:translateX(7px) rotate(2deg)}60%{transform:translateX(-4px)}}
+@keyframes pop{0%{transform:scale(.3) rotate(-8deg);opacity:0}20%{transform:scale(1.15) rotate(-8deg);opacity:1}70%{opacity:1}100%{transform:rotate(-8deg) translateY(-14px);opacity:0}}
+@keyframes burst{from{transform:scale(.2);opacity:1}to{transform:scale(1.35);opacity:0}}
+@keyframes shk{20%{transform:translate(-6px,3px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-3px,2px)}80%{transform:translate(2px,-1px)}}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes hurt{30%{transform:translateX(-8%) rotate(-4deg)}}
+@keyframes fire{from{filter:drop-shadow(0 0 4px #ffe08a) drop-shadow(0 0 10px #ff7a00)}to{filter:drop-shadow(0 0 8px #fff3c4) drop-shadow(0 0 20px #ff4d00)}}
+@keyframes flap{to{transform:rotate(9deg)}}
+@keyframes bump{50%{transform:scale(1.3)}}
+@keyframes up{from{transform:translateY(30px);opacity:0}}
+@keyframes star{0%{transform:scale(0) rotate(-30deg)}70%{transform:scale(1.25)}100%{transform:none}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+<section id="home" class="scr on">
+  <div class="hero"><div class="sun"></div><div class="floor"></div><h1 class="ttl">九九道場</h1><p class="hsub">くく どうじょう<br>いたを わって おびを あげろ</p><span id="heroFig"></span></div>
+  <div class="rank"><span id="beltSvg"></span><div><b class="dg" id="beltName">しろおび</b><div class="meter"><i id="beltMeter"></i></div><small id="beltNext"></small></div></div>
+  <div class="grid" id="danGrid"></div>
+  <div class="row2"><button class="plq boss" id="bossBtn"></button><button class="plq weak" id="weakBtn"></button></div>
+  <div class="foot"><p id="totTxt"></p><button class="link" id="setBtn">せってい</button></div>
+</section>
+
+<section id="learn" class="scr">
+  <div class="bar"><button class="link" id="lnBack">← もどる</button><h2 class="dg" id="lnT"></h2></div>
+  <p class="tip">こえに だして となえよう。ぎょうを タップすると よみかたが きこえるよ。「こたえを かくす」で じぶんテストも できるよ。</p>
+  <div class="ctl"><button id="lnAll">ぜんぶ きく</button><button id="lnHide">こたえを かくす</button></div>
+  <div class="rows" id="lnRows"></div>
+  <button class="btn go" id="lnGo">しあい スタート</button>
+</section>
+
+<section id="battle" class="scr">
+  <div class="hud"><button class="link" id="quit">やめる</button><div class="hp" id="hp"></div><b class="score dg" id="score">0</b></div>
+  <div class="r2"><span id="left"></span><span class="combo" id="combo"></span></div>
+  <div class="scene" id="scene">
+    <div class="sun"></div><div class="floor"></div>
+    <span id="fig"></span>
+    <div class="stand"><div class="board" id="board"><div class="h l"></div><div class="h r"></div></div></div>
+    <div class="yb" id="yb"></div>
+  </div>
+  <div class="gauge" id="gauge"><i id="gbar"></i></div>
+  <div class="ask" id="ask"></div>
+  <div class="ch" id="ch"></div>
+</section>
+
+<section id="result" class="scr"><div class="res" id="res"></div></section>
+</div>
+
+<div class="sheet" id="sheet"><div id="shIn"></div></div>
+<div class="sheet mid" id="modal"><div id="mdIn"></div></div>
+
+<script>
+{
+const RAW=[
+"いんいちが/いち,いんにが/に,いんさんが/さん,いんしが/し,いんごが/ご,いんろくが/ろく,いんしちが/しち,いんはちが/はち,いんくが/く",
+"にいちが/に,ににんが/し,にさんが/ろく,にしが/はち,にご/じゅう,にろく/じゅうに,にしち/じゅうし,にはち/じゅうろく,にく/じゅうはち",
+"さんいちが/さん,さんにが/ろく,さざんが/く,さんし/じゅうに,さんご/じゅうご,さぶろく/じゅうはち,さんしち/にじゅういち,さんぱ/にじゅうし,さんく/にじゅうしち",
+"しいちが/し,しにが/はち,しさん/じゅうに,しし/じゅうろく,しご/にじゅう,しろく/にじゅうし,ししち/にじゅうはち,しは/さんじゅうに,しく/さんじゅうろく",
+"ごいちが/ご,ごに/じゅう,ごさん/じゅうご,ごし/にじゅう,ごご/にじゅうご,ごろく/さんじゅう,ごしち/さんじゅうご,ごは/しじゅう,ごっく/しじゅうご",
+"ろくいちが/ろく,ろくに/じゅうに,ろくさん/じゅうはち,ろくし/にじゅうし,ろくご/さんじゅう,ろくろく/さんじゅうろく,ろくしち/しじゅうに,ろくは/しじゅうはち,ろっく/ごじゅうし",
+"しちいちが/しち,しちに/じゅうし,しちさん/にじゅういち,しちし/にじゅうはち,しちご/さんじゅうご,しちろく/しじゅうに,しちしち/しじゅうく,しちは/ごじゅうろく,しちく/ろくじゅうさん",
+"はちいちが/はち,はちに/じゅうろく,はちさん/にじゅうし,はちし/さんじゅうに,はちご/しじゅう,はちろく/しじゅうはち,はちしち/ごじゅうろく,はっぱ/ろくじゅうし,はっく/しちじゅうに",
+"くいちが/く,くに/じゅうはち,くさん/にじゅうしち,くし/さんじゅうろく,くご/しじゅうご,くろく/ごじゅうし,くしち/ろくじゅうさん,くは/しちじゅうに,くく/はちじゅういち"];
+const R=RAW.map(r=>r.split(',').map(x=>x.split('/')));
+const NUMR={};for(let a=1;a<=9;a++)for(let b=1;b<=9;b++)NUMR[a*b]=R[a-1][b-1][1];
+const PRODS=Object.keys(NUMR).map(Number);
+const BELTS=[['しろおび',0,'#f4f0e6'],['きいろおび',3,'#f4c51c'],['オレンジおび',6,'#f2801c'],['みどりおび',10,'#2e9d4c'],['あおおび',14,'#2c6fd6'],['むらさきおび',18,'#8344bf'],['ちゃいろおび',22,'#7a4a22'],['くろおび',26,'#141010'],['くくマスター',30,'#f6c744']];
+const $=s=>document.querySelector(s);
+const rnd=n=>Math.floor(Math.random()*n);
+const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const kata=s=>s.replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+96));
+const line=(a,b)=>R[a-1][b-1].join(' ');
+const stars=n=>[0,1,2].map(i=>`<i class="${i<n?'y':''}">★</i>`).join('');
+const EAR='<svg viewBox="0 0 48 48"><path d="M7 18h8l11-9v30l-11-9H7z" fill="currentColor"/><path d="M32 16c4 4 4 12 0 16M37 11c7 7 7 19 0 26" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/></svg>';
+const STAR=(()=>{let p=[];for(let i=0;i<24;i++){const r=i%2?20:50,t=i*Math.PI/12;p.push((50+r*Math.cos(t)).toFixed(1)+','+(50+r*Math.sin(t)).toFixed(1))}return `<svg viewBox="0 0 100 100"><polygon points="${p.join(' ')}" fill="#fff4cf"/><circle cx="50" cy="50" r="16" fill="#fff"/></svg>`})();
+const figSVG=c=>`<svg class="${c}" viewBox="0 0 160 200" aria-hidden="true"><g fill="none" stroke="var(--sil)" stroke-linecap="round" stroke-linejoin="round"><path d="M84 108L108 146L124 188" stroke-width="17"/><path d="M70 108L52 150L34 188" stroke-width="17"/><path d="M122 191h16M30 191h16" stroke-width="8"/><path d="M64 52H94L90 112H66Z" fill="var(--sil)" stroke-width="6"/><g class="pS"><path d="M90 58L110 80L120 58" stroke-width="12"/><path d="M68 58L60 86L78 98" stroke-width="12"/><circle cx="121" cy="55" r="8" fill="var(--sil)"/><circle cx="80" cy="98" r="7.5" fill="var(--sil)"/></g><g class="pP"><path d="M90 58L120 58L146 57" stroke-width="12"/><path d="M68 58L52 82L66 98" stroke-width="12"/><circle cx="149" cy="57" r="9" fill="var(--sil)"/><circle cx="68" cy="98" r="7.5" fill="var(--sil)"/></g><circle cx="80" cy="34" r="15" fill="var(--sil)" stroke="none"/></g><path d="M65 31L95 29" stroke="#f3ece2" stroke-width="5" stroke-linecap="round"/><path class="tail" d="M66 31C56 28 48 22 38 24M66 32C56 34 50 40 40 42" stroke="#f3ece2" stroke-width="4" fill="none" stroke-linecap="round"/><g class="belt" fill="none" stroke-linecap="round"><path class="bo" d="M65 105H91" stroke-width="11"/><path d="M65 105H91" stroke-width="8"/><path d="M87 106L96 124M87 106L90 127" stroke-width="4"/></g></svg>`;
+const beltSVG=c=>`<svg viewBox="0 0 120 60" aria-hidden="true"><g stroke="rgba(0,0,0,.45)" stroke-width="1.5"><rect x="2" y="16" width="116" height="14" rx="3" fill="${c}"/><path d="M54 28L40 57L50 58L60 32ZM66 28L80 57L70 58L60 32Z" fill="${c}"/><rect x="50" y="11" width="20" height="23" rx="5" fill="${c}"/></g><rect x="2" y="16" width="116" height="4" fill="rgba(255,255,255,.25)"/></svg>`;
+
+/* 保存 */
+const KEY='kuku-dojo-v1';
+let D={stars:{},best:{},fast:{},weak:{},set:{t:7,mode:'mix',voice:true,se:true}};
+try{const s=JSON.parse(localStorage.getItem(KEY));if(s)D={...D,...s,set:{...D.set,...(s.set||{})}}}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}};
+const total=()=>{let t=D.stars.boss||0;for(let d=1;d<=9;d++)t+=D.stars[d]||0;return t};
+const beltIdx=t=>{let i=0;BELTS.forEach((b,k)=>{if(t>=b[1])i=k});return i};
+const weakList=()=>Object.entries(D.weak).filter(e=>e[1]>0).sort((x,y)=>y[1]-x[1]).map(e=>+e[0]);
+
+/* 音 */
+let AC=null;
+const ac=()=>{try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}};
+function tone(f,d,type,v,f2,w){if(!AC||!D.set.se)return;try{const t=AC.currentTime+(w||0),o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(v||.2,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d+.03)}catch(e){}}
+function noise(d,v,fc){if(!AC||!D.set.se)return;try{const n=AC.createBuffer(1,Math.floor(AC.sampleRate*d),AC.sampleRate),a=n.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=(Math.random()*2-1)*(1-i/a.length)**2;const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=n;f.type='lowpass';f.frequency.value=fc;g.gain.value=v;s.connect(f);f.connect(g);g.connect(AC.destination);s.start()}catch(e){}}
+const SE={
+  hit(){noise(.2,.7,2400);tone(170,.25,'sine',.7,40)},
+  crit(){SE.hit();tone(880,.14,'triangle',.2,0,.05);tone(1320,.22,'triangle',.18,0,.13)},
+  miss(){tone(160,.3,'triangle',.25,90)},
+  tap(){tone(660,.05,'triangle',.08)},
+  tick(){tone(1050,.05,'square',.05)},
+  clear(){[523,659,784,1047].forEach((f,i)=>tone(f,.28,'triangle',.2,0,i*.12))},
+  belt(){[392,523,659,784,1047,1319].forEach((f,i)=>tone(f,.34,'triangle',.2,0,i*.11))}
+};
+/* こえ（ひらがなの「は」が「わ」と読まれないよう、カタカナにして読ませる） */
+let jaV=null,sayId=0,U=null;
+const hasTTS=()=>!!window.speechSynthesis&&typeof SpeechSynthesisUtterance!=='undefined';
+const pickV=()=>{try{const v=speechSynthesis.getVoices().filter(x=>/^ja/i.test(x.lang));jaV=v.find(x=>/Kyoko|O-?ren|Google/i.test(x.name))||v[0]||null}catch(e){}};
+if(hasTTS()){pickV();try{speechSynthesis.onvoiceschanged=pickV}catch(e){}}
+function say(t,cb){const id=++sayId;let done=false;const fin=()=>{if(!done&&id===sayId){done=true;cb&&cb()}};
+  if(!D.set.voice||!hasTTS()){setTimeout(fin,350);return}
+  try{if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();U=new SpeechSynthesisUtterance(kata(t));U.lang='ja-JP';U.rate=1;if(jaV)U.voice=jaV;U.onend=fin;U.onerror=fin;speechSynthesis.speak(U);setTimeout(fin,Math.min(4500,900+t.length*170))}catch(e){setTimeout(fin,350)}}
+const hush=()=>{sayId++;try{hasTTS()&&speechSynthesis.cancel()}catch(e){}};
+let unlocked=false;
+const unlock=()=>{ac();if(unlocked||!hasTTS())return;unlocked=true;try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u)}catch(e){}};
+
+/* 画面 */
+const show=id=>{document.querySelectorAll('.scr').forEach(s=>s.classList.toggle('on',s.id===id));window.scrollTo(0,0)};
+$('#heroFig').innerHTML=figSVG('');
+$('#fig').innerHTML=figSVG('fighter');
+const fig=()=>$('#fig svg');
+
+function renderHome(){
+  const t=total(),bi=beltIdx(t),b=BELTS[bi],nb=BELTS[bi+1];
+  document.documentElement.style.setProperty('--belt',b[2]);
+  $('#beltSvg').innerHTML=beltSVG(b[2]);$('#beltName').textContent=b[0];
+  $('#beltMeter').style.width=(nb?(t-b[1])/(nb[1]-b[1])*100:100)+'%';
+  $('#beltNext').textContent=nb?`つぎの ${nb[0]} まで あと ★${nb[1]-t}`:'さいこうの くくマスター！';
+  $('#danGrid').innerHTML=[1,2,3,4,5,6,7,8,9].map(d=>`<button class="plq dan" data-k="${d}"><b class="dg">${d}</b><span>のだん</span><em class="st">${stars(D.stars[d]||0)}</em></button>`).join('');
+  $('#bossBtn').innerHTML=`ボス<br>かわら18まいわり<em class="st">${stars(D.stars.boss||0)}</em>`;
+  const w=weakList().length,wb=$('#weakBtn');
+  wb.disabled=!w;wb.innerHTML=w?`にがて とっくん<small>${Math.min(w,9)}もん</small>`:`にがて とっくん<small>まだ なし</small>`;
+  $('#totTxt').textContent=`あつめた ★ ${t} / 30`;
+}
+
+function openSheet(k){
+  SE.tap();const isB=k==='boss',st=D.stars[k]||0,best=D.best[k]||0,fast=D.fast[k];
+  $('#shIn').innerHTML=`<h2>${isB?'ボス かわら18まいわり':k+'のだん'}</h2><div class="st big">${stars(st)}</div>
+  <p class="shd">${isB?'2〜9のだんから 18もん。かわらを ぜんぶ わろう！':`${line(k,1)} 〜 ${line(k,9)}`}</p>
+  <div class="mini"><span>ベスト<b>${best}</b></span><span>いちばん はやい<b>${fast?fast.toFixed(1)+'びょう':'―'}</b></span></div>
+  <p class="how">★ クリア　★★ ノーミス　★★★ ノーミスで へいきん 3びょう いない</p>
+  ${isB?'':'<button class="btn sub" data-a="learn">おぼえる（となえる）</button>'}
+  <button class="btn go" data-a="go">しあい スタート</button><button class="btn ghost" data-a="close">とじる</button>`;
+  $('#sheet').dataset.k=k;$('#sheet').classList.add('on');
+}
+$('#danGrid').addEventListener('click',e=>{const b=e.target.closest('button');if(b)openSheet(+b.dataset.k)});
+$('#bossBtn').addEventListener('click',()=>openSheet('boss'));
+$('#weakBtn').addEventListener('click',()=>{unlock();SE.tap();start('weak')});
+$('#sheet').addEventListener('click',e=>{const sh=$('#sheet');const b=e.target.closest('button');
+  if(e.target===sh||(b&&b.dataset.a==='close')){sh.classList.remove('on');return}
+  if(!b)return;const k=sh.dataset.k==='boss'?'boss':+sh.dataset.k;sh.classList.remove('on');unlock();
+  if(b.dataset.a==='go')start(k);else if(b.dataset.a==='learn')openLearn(k)});
+
+/* おぼえる */
+let L=null;
+function openLearn(d){hush();L={d,play:false};$('#lnT').textContent=`${d}のだん`;
+  $('#lnRows').innerHTML=[1,2,3,4,5,6,7,8,9].map(b=>{const[l,r]=R[d-1][b-1];return `<button class="row" data-b="${b}"><span class="f">${d}×${b}＝<em>${d*b}</em></span><span class="y">${l} <em>${r}</em></span></button>`}).join('');
+  $('#lnRows').classList.remove('hide');$('#lnHide').classList.remove('act');$('#lnAll').classList.remove('act');$('#lnAll').textContent='ぜんぶ きく';show('learn')}
+const mark=b=>{document.querySelectorAll('#lnRows .row').forEach(r=>r.classList.toggle('now',+r.dataset.b===b))};
+function stopAll(){if(L)L.play=false;$('#lnAll').classList.remove('act');$('#lnAll').textContent='ぜんぶ きく'}
+$('#lnRows').addEventListener('click',e=>{const r=e.target.closest('.row');if(!r||!L)return;unlock();stopAll();const b=+r.dataset.b;mark(b);r.classList.add('peek');say(line(L.d,b),()=>setTimeout(()=>r.classList.remove('peek'),600))});
+$('#lnAll').addEventListener('click',()=>{unlock();if(L.play){hush();stopAll();mark(0);return}
+  L.play=true;$('#lnAll').classList.add('act');$('#lnAll').textContent='とめる';let b=1;
+  const step=()=>{if(!L||!L.play)return;if(b>9){stopAll();mark(0);return}mark(b);const cur=b++;say(line(L.d,cur),()=>setTimeout(step,D.set.voice?250:900))};step()});
+$('#lnHide').addEventListener('click',()=>{SE.tap();$('#lnHide').classList.toggle('act',$('#lnRows').classList.toggle('hide'))});
+$('#lnBack').addEventListener('click',()=>{hush();stopAll();L=null;renderHome();show('home')});
+$('#lnGo').addEventListener('click',()=>{const d=L.d;hush();stopAll();unlock();start(d)});
+
+/* しあい */
+let G=null;
+const later=(fn,ms)=>{const g=G;return setTimeout(()=>{if(G&&G===g)fn()},ms)};
+function start(kind){
+  hush();let f=[];
+  if(kind==='boss'){for(let a=2;a<=9;a++)for(let b=2;b<=9;b++)f.push([a,b]);f=shuf(f).slice(0,18)}
+  else if(kind==='weak'){f=shuf(weakList().slice(0,9).map(k=>[Math.floor(k/10),k%10]))}
+  else{for(let b=1;b<=9;b++)f.push([kind,b]);shuf(f)}
+  if(!f.length){renderHome();show('home');return}
+  G={kind,queue:f,target:f.length,broke:0,hp:3,score:0,combo:0,maxc:0,miss:0,times:[],missed:[],q:null,lock:true,wait:false};
+  $('#board').className='board'+(kind==='boss'?' tile':'');$('#board').querySelectorAll('.h').forEach(h=>h.innerHTML='');
+  $('#ch').innerHTML='';$('#ask').textContent='';$('#yb').classList.remove('on');$('#gbar').style.width='100%';
+  fig().setAttribute('class','fighter');quitArm=false;$('#quit').textContent='やめる';
+  hud();show('battle');later(next,450);
+}
+function hud(){
+  $('#hp').innerHTML=[0,1,2].map(i=>`<i class="${i<G.hp?'':'off'}"></i>`).join('');
+  $('#score').textContent=G.score;
+  const nm=G.kind==='boss'?'ボス':G.kind==='weak'?'にがて とっくん':G.kind+'のだん';
+  $('#left').textContent=`${nm}　のこり ${G.target-G.broke}まい`;
+  const c=$('#combo');c.textContent=G.combo>=2?`${G.combo}れんげき！`:'';c.classList.remove('bump');void c.offsetWidth;if(G.combo>=2)c.classList.add('bump');
+}
+function distract(a,b){const p=a*b,c=new Set(),add=n=>{if(n!==p&&NUMR[n])c.add(n)};
+  [[a,b+1],[a,b-1],[a+1,b],[a-1,b],[a,b+2],[a,b-2],[a+1,b-1],[a-1,b+1]].forEach(([x,y])=>{if(x>0&&y>0)add(x*y)});
+  const o=shuf([...c]).slice(0,3);while(o.length<3){const n=PRODS[rnd(PRODS.length)];if(n!==p&&!o.includes(n))o.push(n)}return shuf([p,...o])}
+function pickType(){const m=D.set.mode;if(m==='num'||m==='yomi')return m;const r=Math.random();
+  if(D.set.voice&&hasTTS())return r<.45?'num':r<.8?'yomi':'mimi';return r<.55?'num':'yomi'}
+function next(){
+  if(!G)return;sayId++;
+  if(G.broke>=G.target)return finish(true);
+  if(G.hp<=0)return finish(false);
+  const[a,b]=G.queue.shift(),type=pickType(),opts=distract(a,b);
+  const q=G.q={a,b,p:a*b,type,opts};
+  const html=type==='num'?`<span class="qn">${a}<i>×</i>${b}</span>`:type==='yomi'?`<span class="qy"><small>${a} × ${b}</small>${R[a-1][b-1][0]}<u> ？</u></span>`:`<span class="qm">${EAR}タップで もういちど</span>`;
+  const bd=$('#board');bd.className='board'+(G.kind==='boss'?' tile':'');bd.querySelectorAll('.h').forEach(h=>h.innerHTML=html);void bd.offsetWidth;bd.classList.add('in');
+  fig().setAttribute('class','fighter'+(G.combo>=5?' fire':''));
+  $('#yb').classList.remove('on');$('#gauge').classList.remove('low');$('#gbar').style.width='100%';
+  $('#ask').textContent=type==='num'?'こたえは？':type==='yomi'?'つづきを となえろ！':'よみかたを きいて こたえを えらべ！';
+  const ch=$('#ch');ch.className='ch'+(type==='yomi'?' yomi':'');
+  ch.innerHTML=opts.map(n=>`<button class="plq" data-v="${n}">${type==='yomi'?NUMR[n]:n}</button>`).join('');
+  if(type==='mimi'){G.lock=true;say(R[a-1][b-1][0],()=>{if(G&&G.q===q){G.lock=false;timer()}})}
+  else{G.lock=false;timer()}
+}
+function timer(){
+  G.t0=performance.now();G.lim=(D.set.t+(G.q.type==='yomi'?1:0))*1000;let tk=99;const g=G,q=G.q;
+  const loop=now=>{if(G!==g||g.q!==q||g.lock)return;const el=now-g.t0,r=Math.max(0,1-el/g.lim);
+    $('#gbar').style.width=r*100+'%';$('#gauge').classList.toggle('low',r<.3);
+    const s=Math.ceil((g.lim-el)/1000);if(s<=3&&s>0&&s<tk){tk=s;SE.tick()}
+    if(el>=g.lim)return answer(null,null);requestAnimationFrame(loop)};
+  requestAnimationFrame(loop);
+}
+function fx(cls,html){const s=$('#scene'),e=document.createElement('div');e.className=cls;e.innerHTML=html;s.appendChild(e);setTimeout(()=>e.remove(),850)}
+function answer(v,btn){
+  if(!G||G.lock)return;G.lock=true;
+  const q=G.q,dt=(performance.now()-G.t0)/1000,ok=v===q.p,key=q.a*10+q.b,bs=[...$('#ch').children];
+  bs.forEach(b=>b.disabled=true);
+  if(ok){
+    const crit=dt<=2.5;G.broke++;G.combo++;G.maxc=Math.max(G.maxc,G.combo);G.times.push(dt);
+    G.score+=100+Math.round(Math.max(0,1-dt*1000/G.lim)*100)+Math.min(G.combo,10)*10+(crit?50:0);
+    D.weak[key]=Math.max(0,(D.weak[key]||0)+(dt>4?1:-1));
+    btn.classList.add('ok');
+    const f=fig();f.setAttribute('class','fighter punch'+(G.combo>=5?' fire':''));setTimeout(()=>{if(G)f.setAttribute('class','fighter'+(G.combo>=5?' fire':''))},260);
+    setTimeout(()=>{$('#board').classList.add('brk');fx('burst',STAR);const s=$('#scene');s.classList.remove('shk');void s.offsetWidth;s.classList.add('shk')},90);
+    fx('pop'+(crit?' c':''),crit?'かいしん！':G.kind==='boss'?'ガシャーン！':'バキッ！');
+    (crit?SE.crit:SE.hit)();
+    banner(q,true);hud();
+    const t=performance.now();say(line(q.a,q.b),()=>later(next,Math.max(150,800-(performance.now()-t))));
+  }else{
+    G.combo=0;G.hp--;G.miss++;
+    if(!G.missed.some(m=>m[0]===q.a&&m[1]===q.b))G.missed.push([q.a,q.b]);
+    D.weak[key]=(D.weak[key]||0)+3;
+    G.queue.splice(Math.min(G.queue.length,2+rnd(3)),0,[q.a,q.b]);
+    if(btn)btn.classList.add('ng');
+    bs.forEach(b=>{if(+b.dataset.v===q.p)b.classList.add('ok')});
+    fig().setAttribute('class','fighter hurt');$('#board').classList.add('bonk');
+    fx('pop n',v===null?'じかんぎれ…':'おしい！');SE.miss();
+    banner(q,false);hud();G.wait=true;
+    say(line(q.a,q.b),()=>{if(G)G.auto=later(goOn,1800)});
+  }
+  save();
+}
+function banner(q,ok){const[l,r]=R[q.a-1][q.b-1],y=$('#yb');
+  y.innerHTML=`<div><small>${ok?'':'せいかいは　'}${q.a} × ${q.b} ＝ ${q.p}</small><b>${l} ${r}</b></div>${ok?'':'<button id="goBtn">つぎへ ▶</button>'}`;
+  y.classList.add('on')}
+function goOn(){if(!G||!G.wait)return;G.wait=false;clearTimeout(G.auto);next()}
+$('#yb').addEventListener('click',e=>{if(e.target.closest('#goBtn')){SE.tap();goOn()}});
+$('#ch').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.disabled)answer(+b.dataset.v,b)});
+$('#board').addEventListener('click',()=>{if(G&&G.q&&G.q.type==='mimi'&&!G.lock){const q=G.q;say(R[q.a-1][q.b-1][0])}});
+let quitArm=false,quitT=0;
+$('#quit').addEventListener('click',()=>{if(!quitArm){quitArm=true;$('#quit').textContent='ほんとに？';clearTimeout(quitT);quitT=setTimeout(()=>{quitArm=false;$('#quit').textContent='やめる'},2500);return}
+  quitArm=false;G=null;hush();renderHome();show('home')});
+
+function finish(clr){
+  const g=G;G=null;const k=g.kind,avg=g.times.length?g.times.reduce((s,x)=>s+x,0)/g.times.length:0;
+  let st=0;if(clr){st=1;if(!g.miss){st=2;if(avg<=3)st=3}}
+  const before=beltIdx(total());let nb=false;
+  if(k!=='weak'){if(st>(D.stars[k]||0))D.stars[k]=st;if(g.score>(D.best[k]||0)){D.best[k]=g.score;nb=true}if(clr&&(!D.fast[k]||avg<D.fast[k]))D.fast[k]=avg}
+  save();const after=beltIdx(total());
+  const nm=k==='boss'?'ボス':k==='weak'?'にがて とっくん':k+'のだん';
+  const msg=!clr?(g.broke?`${g.broke}まい わった！ あと ${g.target-g.broke}まい。となえてから もういちど！`:'だいじょうぶ！ まず となえて おぼえてから もういちど！'):k==='weak'?'にがてを やっつけた！ つよくなったぞ':st===3?'かんぺき！ はやさも ミスなしも さいこう':st===2?'ノーミス！ つぎは はやさで ★3 だ':'クリア！ ミスを なくして ★2 を ねらえ';
+  $('#res').innerHTML=`<h2 class="dg">${clr?'クリア！':'おしい！'}</h2><p class="msg" style="margin:4px 0 0">${nm}</p>
+  ${k==='weak'||!clr?'':`<div class="rs">${[0,1,2].map(i=>`<i class="${i<st?'y':''}" style="animation-delay:${.2+i*.25}s">★</i>`).join('')}</div>`}
+  <p class="msg">${msg}</p>
+  <div class="stats"><div><small>スコア${nb?' ベスト！':''}</small><b>${g.score}</b></div><div><small>へいきんの はやさ</small><b>${avg?avg.toFixed(1)+'びょう':'―'}</b></div><div><small>ミス</small><b>${g.miss}</b></div><div><small>さいだい れんげき</small><b>${g.maxc}</b></div></div>
+  ${g.missed.length?`<div class="miss"><p>まちがえた くく（タップで きく）</p><div class="rows">${g.missed.map(([a,b])=>`<button class="row" data-a="${a}" data-b="${b}"><span class="f">${a}×${b}＝${a*b}</span><span class="y">${line(a,b)}</span></button>`).join('')}</div></div>`:''}
+  <button class="btn go" data-r="again">もういちど</button>${typeof k==='number'?'<button class="btn sub" data-r="learn">おぼえる</button>':''}<button class="btn ghost" data-r="home">どうじょうに もどる</button>`;
+  $('#res').dataset.k=k;show('result');if(clr)SE.clear();
+  if(after>before)setTimeout(()=>beltUp(after),1300);
+}
+$('#res').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const kk=$('#res').dataset.k,k=isNaN(+kk)?kk:+kk;unlock();
+  if(b.classList.contains('row')){const a=+b.dataset.a,bb=+b.dataset.b;say(line(a,bb));return}
+  SE.tap();if(b.dataset.r==='again')start(k);else if(b.dataset.r==='learn')openLearn(k);else{renderHome();show('home')}});
+
+function beltUp(i){const b=BELTS[i];document.documentElement.style.setProperty('--belt',b[2]);SE.belt();
+  $('#mdIn').innerHTML=`<div class="bu"><p>しょうきゅう！</p>${beltSVG(b[2])}<b>${b[0]}</b><span>に なった！</span><button class="btn go" data-m="close">おす！</button></div>`;
+  $('#modal').classList.add('on')}
+
+/* せってい */
+function openSet(){const s=D.set,seg=(key,list)=>`<div class="seg" data-s="${key}">${list.map(([v,t])=>`<button data-v="${v}" class="${String(s[key])===String(v)?'act':''}">${t}</button>`).join('')}</div>`;
+  $('#mdIn').innerHTML=`<h2>せってい</h2>
+  <div class="opt"><span>こたえる じかん（1もん）</span>${seg('t',[[10,'10びょう'],[7,'7びょう'],[5,'5びょう'],[3,'3びょう']])}</div>
+  <div class="opt"><span>もんだいの しゅるい</span>${seg('mode',[['mix','ミックス'],['num','すうじ'],['yomi','よみかた']])}</div>
+  <div class="opt"><span>よみあげる こえ</span>${seg('voice',[[true,'オン'],[false,'オフ']])}</div>
+  <div class="opt"><span>こうかおん</span>${seg('se',[[true,'オン'],[false,'オフ']])}</div>
+  <p class="note">ミックスは「すうじで こたえる」「よみかたの つづき」「きいて こたえる」が まざって でます。よみかたの つづきは 1びょう ながく なります。九九の よみかたは きょうかしょや ちいきで すこし ちがうことが あります。${hasTTS()?'':'この ブラウザでは こえが つかえません。'}</p>
+  <button class="btn ghost" data-m="reset">きろくを ぜんぶ けす</button><button class="btn go" data-m="close">とじる</button>`;
+  $('#modal').classList.add('on')}
+$('#setBtn').addEventListener('click',()=>{unlock();SE.tap();openSet()});
+let resetArm=false;
+$('#modal').addEventListener('click',e=>{const md=$('#modal'),b=e.target.closest('button');
+  if(e.target===md||(b&&b.dataset.m==='close')){md.classList.remove('on');resetArm=false;renderHome();return}
+  if(!b)return;
+  if(b.dataset.m==='reset'){if(!resetArm){resetArm=true;b.textContent='ほんとうに けす？ もういちど おす';return}
+    D.stars={};D.best={};D.fast={};D.weak={};save();resetArm=false;b.textContent='けしました';renderHome();return}
+  const sg=b.closest('.seg');if(!sg)return;const key=sg.dataset.s,v=b.dataset.v;
+  D.set[key]=key==='t'?+v:key==='mode'?v:v==='true';save();
+  sg.querySelectorAll('button').forEach(x=>x.classList.toggle('act',x===b));SE.tap();
+  if(key==='voice'&&D.set.voice)say('さんし じゅうに')});
+
+renderHome();
+}
+</script>
+</body>
+</html>
